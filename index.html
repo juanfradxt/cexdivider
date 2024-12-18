@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CexDivider</title>
+<style>
+    body {
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        background: #f0f0f5;
+        margin: 0;
+        padding: 0;
+    }
+
+    .app-container {
+        max-width: 400px;
+        margin: 0 auto;
+        background: #ffffff;
+        min-height: 100vh;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    /* Encabezado con logo y nombre */
+    .header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        justify-content: center;
+    }
+
+    .header img {
+        height: 30px;
+        margin-right: 10px;
+    }
+
+    .header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+
+    fieldset {
+        margin-bottom: 20px;
+        padding: 0;
+        border: none;
+    }
+
+    legend {
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    input[type="number"], input[type="text"], select {
+        width: 100%;
+        font-size: 16px;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    button {
+        background: #4CAF50;
+        color: #fff;
+        border: none;
+        font-size: 16px;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 15px;
+        width: 100%;
+        font-weight: 600;
+    }
+
+    button:hover {
+        background: #45a049;
+    }
+
+    .expense-item {
+        background: #fafafa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        line-height: 1.4em;
+        position: relative;
+    }
+
+    .expense-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .small-btn {
+        background: #007BFF;
+        padding: 6px 10px;
+        font-size: 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 0;
+        width: auto;
+    }
+
+    .small-btn.edit {
+        background: #FF9800;
+    }
+
+    .small-btn.delete {
+        background: #F44336;
+    }
+
+    h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    #results {
+        background: #fafafa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        line-height: 1.5em;
+        white-space: pre-wrap; 
+    }
+
+    #one-person-section, #manual-percentage-section {
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-bottom: 15px;
+    }
+
+    #manual-percentage-fields div {
+        margin-bottom: 10px;
+    }
+
+    #manual-percentage-fields label {
+        font-weight: normal;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .person-input-name {
+        margin-bottom: 10px;
+    }
+
+    #participants-section:disabled {
+        opacity: 0.5;
+    }
+
+    .footer-space {
+        flex: 1;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+</style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <img src="logo.png" alt="Logo CEMEX">
+        <h1>CexDivider</h1>
+    </div>
+
+    <!-- Sección para definir participantes -->
+    <fieldset id="participants-section">
+        <legend>Participantes</legend>
+        <label for="num-personas">Número de personas:</label>
+        <input type="number" id="num-personas" min="1" value="2">
+
+        <div id="personas-container"></div>
+
+        <button id="set-participants-btn">Guardar participantes</button>
+    </fieldset>
+
+    <!-- Sección para añadir gastos (por defecto oculta hasta guardar participantes) -->
+    <fieldset id="expenses-section" class="hidden">
+        <legend>Añadir Gastos</legend>
+
+        <div id="new-expense-form" class="expense-item">
+            <label>¿Quién pagó?</label>
+            <select id="expense-payer"></select>
+
+            <label>¿Cuánto se gastó?</label>
+            <input type="number" id="expense-amount" min="0.01" step="0.01">
+
+            <label>¿Cómo se divide este gasto?</label>
+            <select id="expense-distribution">
+                <option value="equal">A partes iguales</option>
+                <option value="one">Una persona asume todo</option>
+                <option value="manual">Manual (porcentajes)</option>
+            </select>
+
+            <div id="one-person-section" class="hidden">
+                <label>¿Quién asume el 100%?</label>
+                <select id="one-person-select"></select>
+            </div>
+
+            <div id="manual-percentage-section" class="hidden">
+                <p style="margin-bottom:10px;font-weight:500;">Introduce el porcentaje para cada persona (debe sumar 100% en total)</p>
+                <div id="manual-percentage-fields"></div>
+            </div>
+
+            <button id="add-expense-btn">Añadir gasto</button>
+        </div>
+
+        <h3>Gastos añadidos:</h3>
+        <div id="expenses-list"></div>
+
+        <button id="calculate-btn">Calcular resultados (opcional)</button>
+    </fieldset>
+
+    <!-- Sección de resultados -->
+    <div id="results-section" class="hidden">
+        <h2>Resultados</h2>
+        <div id="results" class="result"></div>
+    </div>
+
+    <div class="footer-space"></div>
+</div>
+
+<script>
+let personas = [];
+let gastos = []; 
+
+window.addEventListener('load', () => {
+    loadFromLocalStorage();
+});
+
+function loadFromLocalStorage() {
+    const storedPersonas = localStorage.getItem('personas');
+    const storedGastos = localStorage.getItem('gastos');
+
+    if (storedPersonas) {
+        personas = JSON.parse(storedPersonas);
+    }
+    if (storedGastos) {
+        gastos = JSON.parse(storedGastos);
+    }
+
+    if (personas.length > 0) {
+        document.getElementById('participants-section').disabled = true;
+        document.getElementById('expenses-section').classList.remove('hidden');
+        populateExpenseDropdowns();
+        mostrarGastos();
+        calculateResults(); // Calcular inmediatamente si hay datos
+    }
+}
+
+function saveToLocalStorage() {
+    localStorage.setItem('personas', JSON.stringify(personas));
+    localStorage.setItem('gastos', JSON.stringify(gastos));
+}
+
+document.getElementById('set-participants-btn').addEventListener('click', () => {
+    const num = parseInt(document.getElementById('num-personas').value);
+    if (isNaN(num) || num <= 0) {
+        alert("Introduce un número de participantes válido.");
+        return;
+    }
+
+    const personaInputs = document.querySelectorAll('.person-input-name');
+    if (personaInputs.length > 0) {
+        // Guardar nombres
+        personas = [];
+        for (let i = 0; i < personaInputs.length; i++) {
+            const name = personaInputs[i].value.trim();
+            if (!name) {
+                alert("Todos los nombres deben estar completos.");
+                return;
+            }
+            personas.push(name);
+        }
+        document.getElementById('participants-section').disabled = true;
+        document.getElementById('expenses-section').classList.remove('hidden');
+        populateExpenseDropdowns();
+        saveToLocalStorage();
+    } else {
+        // Generar inputs de nombres
+        const container = document.getElementById('personas-container');
+        container.innerHTML = '';
+        for (let i = 0; i < num; i++) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = `Nombre de la persona ${i+1}`;
+            input.classList.add('person-input-name');
+            container.appendChild(input);
+        }
+    }
+});
+
+function populateExpenseDropdowns() {
+    const payerSelect = document.getElementById('expense-payer');
+    const onePersonSelect = document.getElementById('one-person-select');
+
+    payerSelect.innerHTML = '';
+    onePersonSelect.innerHTML = '';
+
+    personas.forEach(p => {
+        let opt1 = document.createElement('option');
+        opt1.value = p;
+        opt1.textContent = p;
+        payerSelect.appendChild(opt1);
+
+        let opt2 = document.createElement('option');
+        opt2.value = p;
+        opt2.textContent = p;
+        onePersonSelect.appendChild(opt2);
+    });
+
+    const manualFields = document.getElementById('manual-percentage-fields');
+    manualFields.innerHTML = '';
+    personas.forEach(p => {
+        let div = document.createElement('div');
+        let label = document.createElement('label');
+        label.textContent = `Porcentaje para ${p}: `;
+        let input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.max = '100';
+        input.value = '0';
+        input.classList.add('manual-percent');
+        input.dataset.person = p;
+        div.appendChild(label);
+        div.appendChild(input);
+        manualFields.appendChild(div);
+    });
+}
+
+document.getElementById('add-expense-btn').addEventListener('click', () => {
+    const pagador = document.getElementById('expense-payer').value;
+    const amount = parseFloat(document.getElementById('expense-amount').value);
+    const distribution = document.getElementById('expense-distribution').value;
+
+    if (!pagador || isNaN(amount) || amount <= 0) {
+        alert("Datos del gasto inválidos.");
+        return;
+    }
+
+    let expenseData = { pagador, cantidad: amount, tipo: distribution };
+
+    if (distribution === 'one') {
+        const who = document.getElementById('one-person-select').value;
+        expenseData.distributionData = { uniquePerson: who };
+    } else if (distribution === 'manual') {
+        const inputs = document.querySelectorAll('.manual-percent');
+        let arr = [];
+        let sum = 0;
+        for (let inp of inputs) {
+            let val = parseFloat(inp.value);
+            if (isNaN(val) || val < 0 || val > 100) {
+                alert("Porcentajes inválidos. Cada porcentaje debe ser entre 0 y 100.");
+                return;
+            }
+            sum += val;
+            arr.push({ nombre: inp.dataset.person, porcentaje: val/100 });
+        }
+        if (Math.abs(sum - 100) > 0.0001) {
+            alert("La suma de los porcentajes debe ser 100%.");
+            return;
+        }
+        expenseData.distributionData = { manualPorcentajes: arr };
+    }
+
+    gastos.push(expenseData);
+    saveToLocalStorage();
+    mostrarGastos();
+    calculateResults(); // recalcular tras añadir
+    limpiarFormularioGastos();
+});
+
+document.getElementById('expense-distribution').addEventListener('change', (e) => {
+    const val = e.target.value;
+    document.getElementById('one-person-section').classList.toggle('hidden', val !== 'one');
+    document.getElementById('manual-percentage-section').classList.toggle('hidden', val !== 'manual');
+});
+
+function mostrarGastos() {
+    const list = document.getElementById('expenses-list');
+    list.innerHTML = '';
+    gastos.forEach((g, index) => {
+        let div = document.createElement('div');
+        div.classList.add('expense-item');
+        let texto = `Gasto ${index+1}: Pagador: ${g.pagador}, Cantidad: ${g.cantidad.toFixed(2)}, Tipo: ${g.tipo}`;
+        if (g.tipo === 'one') {
+            texto += `, Asume todo: ${g.distributionData.uniquePerson}`;
+        } else if (g.tipo === 'manual') {
+            texto += `, Porcentajes: ${g.distributionData.manualPorcentajes.map(x => x.nombre+": "+(x.porcentaje*100)+"%").join(", ")}`;
+        }
+        div.textContent = texto;
+
+        let actions = document.createElement('div');
+        actions.classList.add('expense-actions');
+
+        let editBtn = document.createElement('button');
+        editBtn.textContent = "Editar";
+        editBtn.classList.add('small-btn', 'edit');
+        editBtn.addEventListener('click', () => editarGasto(index));
+
+        let delBtn = document.createElement('button');
+        delBtn.textContent = "Borrar";
+        delBtn.classList.add('small-btn', 'delete');
+        delBtn.addEventListener('click', () => borrarGasto(index));
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        div.appendChild(actions);
+
+        list.appendChild(div);
+    });
+}
+
+function editarGasto(index) {
+    let gasto = gastos[index];
+    // Pedimos nuevo monto:
+    let nuevoMonto = prompt("Introduce el nuevo monto del gasto:", gasto.cantidad);
+    if (nuevoMonto === null) return; // cancelado
+    nuevoMonto = parseFloat(nuevoMonto);
+    if (isNaN(nuevoMonto) || nuevoMonto <= 0) {
+        alert("Monto inválido.");
+        return;
+    }
+
+    // Pedimos nuevo tipo de distribución
+    let nuevoTipo = prompt("Tipo de distribución (equal, one, manual):", gasto.tipo);
+    if (nuevoTipo === null) return; // cancelado
+    nuevoTipo = nuevoTipo.trim();
+    if (!["equal","one","manual"].includes(nuevoTipo)) {
+        alert("Tipo inválido.");
+        return;
+    }
+
+    gasto.cantidad = nuevoMonto;
+    gasto.tipo = nuevoTipo;
+    delete gasto.distributionData;
+
+    if (nuevoTipo === 'one') {
+        let who = prompt("¿Quién asume el 100%?", personas[0]);
+        if (who === null) return;
+        if (!personas.includes(who)) {
+            alert("Esa persona no existe.");
+            return;
+        }
+        gasto.distributionData = { uniquePerson: who };
+    } else if (nuevoTipo === 'manual') {
+        // Pedir porcentajes manualmente:
+        let arr = [];
+        let sum = 0;
+        for (let p of personas) {
+            let val = prompt(`Porcentaje para ${p} (0 a 100)`, "0");
+            if (val === null) return;
+            let num = parseFloat(val);
+            if (isNaN(num) || num < 0 || num > 100) {
+                alert("Porcentaje inválido.");
+                return;
+            }
+            sum += num;
+            arr.push({ nombre: p, porcentaje: num/100 });
+        }
+        if (Math.abs(sum - 100) > 0.0001) {
+            alert("La suma de los porcentajes debe ser 100%.");
+            return;
+        }
+        gasto.distributionData = { manualPorcentajes: arr };
+    }
+
+    gastos[index] = gasto;
+    saveToLocalStorage();
+    mostrarGastos();
+    calculateResults(); // recalcular tras editar
+}
+
+function borrarGasto(index) {
+    gastos.splice(index, 1);
+    saveToLocalStorage();
+    mostrarGastos();
+    calculateResults(); // recalcular tras borrar
+}
+
+function limpiarFormularioGastos() {
+    document.getElementById('expense-amount').value = '';
+    document.getElementById('expense-distribution').value = 'equal';
+    document.getElementById('one-person-section').classList.add('hidden');
+    document.getElementById('manual-percentage-section').classList.add('hidden');
+    const inputs = document.querySelectorAll('.manual-percent');
+    inputs.forEach(i => i.value = 0);
+}
+
+document.getElementById('calculate-btn').addEventListener('click', calculateResults);
+
+function calculateResults() {
+    if (gastos.length === 0) {
+        document.getElementById('results-section').classList.remove('hidden');
+        document.getElementById('results').textContent = "No hay gastos registrados.";
+        return;
+    }
+
+    // Calcular el total gastado
+    const totalGastado = gastos.reduce((acc, g) => acc + g.cantidad, 0);
+
+    // Calcular lo que debería pagar cada uno
+    let deberiaPagar = {};
+    personas.forEach(p => deberiaPagar[p] = 0);
+
+    gastos.forEach(g => {
+        if (g.tipo === 'equal') {
+            // A partes iguales
+            let parte = g.cantidad / personas.length;
+            personas.forEach(p => {
+                deberiaPagar[p] += parte;
+            });
+        } else if (g.tipo === 'one') {
+            let who = g.distributionData.uniquePerson;
+            deberiaPagar[who] += g.cantidad;
+        } else if (g.tipo === 'manual') {
+            g.distributionData.manualPorcentajes.forEach(obj => {
+                deberiaPagar[obj.nombre] += g.cantidad * obj.porcentaje;
+            });
+        }
+    });
+
+    // Cuánto pagó realmente cada persona
+    let pagoReal = {};
+    personas.forEach(p => pagoReal[p] = 0);
+    gastos.forEach(g => {
+        pagoReal[g.pagador] += g.cantidad;
+    });
+
+    // Diferencias
+    let diferencias = {};
+    personas.forEach(p => {
+        diferencias[p] = pagoReal[p] - deberiaPagar[p];
+    });
+
+    let deudores = [];
+    let acreedores = [];
+    personas.forEach(p => {
+        if (diferencias[p] < 0) {
+            deudores.push({nombre: p, monto: Math.abs(diferencias[p])});
+        } else if (diferencias[p] > 0) {
+            acreedores.push({nombre: p, monto: diferencias[p]});
+        }
+    });
+
+    let resultado = "";
+    if (deudores.length === 0 && acreedores.length === 0) {
+        resultado += "Nadie debe nada a nadie. Todos están a mano.\n";
+    } else {
+        let i = 0; 
+        let j = 0;
+        while (i < deudores.length && j < acreedores.length) {
+            let deuda = deudores[i].monto;
+            let credito = acreedores[j].monto;
+
+            if (Math.abs(deuda - credito) < 0.000001) {
+                resultado += `${deudores[i].nombre} debe pagar ${credito.toFixed(2)} a ${acreedores[j].nombre}\n`;
+                i++;
+                j++;
+            } else if (deuda < credito) {
+                resultado += `${deudores[i].nombre} debe pagar ${deuda.toFixed(2)} a ${acreedores[j].nombre}\n`;
+                acreedores[j].monto = credito - deuda;
+                i++;
+            } else {
+                resultado += `${deudores[i].nombre} debe pagar ${credito.toFixed(2)} a ${acreedores[j].nombre}\n`;
+                deudores[i].monto = deuda - credito;
+                j++;
+            }
+        }
+    }
+
+    document.getElementById('results').textContent = resultado;
+    document.getElementById('results-section').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
